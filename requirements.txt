@@ -1,0 +1,9 @@
+# Runtime deps for the Firevolv backend (FastAPI serverless function on Vercel).
+# Lean by design — no torch/sentence-transformers; the embedding fallback is
+# numpy-only, so the function fits well under Vercel's serverless size limit.
+# Pinned to the versions in the repo's .venv.
+fastapi==0.139.2
+pydantic==2.13.4
+pydantic-settings==2.14.2
+httpx==0.28.1
+numpy==2.5.1
