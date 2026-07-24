@@ -31,13 +31,20 @@ _B64 = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
 # ─────────────────── 3. instruction-override family ───────────────────
 _OVERRIDE_PATTERNS = [
     r"ignore\s+(?:all\s+)?(?:previous|prior|above|earlier)\s+instructions",
-    r"disregard\s+(?:the\s+)?(?:system|above|previous|prior)",
+    r"ignore\s+your\s+(?:instructions|rules|schema|guidelines)",
+    r"disregard\s+(?:the\s+|your\s+)?(?:system|above|previous|prior|schema|format|rules|instructions|guidelines)",
     r"forget\s+(?:everything|all|your)\b",
     r"you\s+are\s+now\b",
     r"new\s+instructions\s*:",
     r"system\s+prompt",
+    r"system\s+override",
     r"developer\s+mode",
     r"do\s+not\s+tell\b",
+    # Judge-capture / meta-instructions: attempts to corrupt the analyzer's or
+    # agent's own output format or verdict (PRD §3.3 tripwire, caught at Layer 1
+    # so it still fires when the judge is unavailable).
+    r"do\s+not\s+output\b",
+    r"(?:reply|respond|answer|output)\s+only\s+with\b",
     r"without\s+(?:telling|informing|asking|notifying)\b",
     r"override\s+(?:your|the)\s+(?:rules|instructions|guidelines)",
     r"as\s+an\s+ai\b.*\byou\s+must\b",

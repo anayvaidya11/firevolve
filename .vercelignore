@@ -1,0 +1,33 @@
+# Keep the Vercel upload small — only api/, backend/, frontend/, vercel.json,
+# and requirements.txt are needed to build & run the function.
+# (functions.includeFiles in vercel.json scopes the function bundle to
+# {backend,frontend}; this file trims what gets uploaded as build context.)
+
+# Eval / benchmark / experiment tooling — not part of the deployed app
+eval/
+benchmark/
+results/
+local_data/
+scripts/
+tests/
+
+# Standalone Guild agent (its own Node project) — unrelated to the web app
+firevolv-detector/
+
+# Local Python env & caches
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Docs (not needed at runtime)
+PRD.md
+WORKFLOW.md
+DEMO_SCRIPT.md
+ARCHITECTURE.md
+SETUP.md
+DEPLOY.md
+README.md
+
+# Dev config
+.mcp.json
+.claude/

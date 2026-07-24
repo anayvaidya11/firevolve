@@ -43,6 +43,12 @@ app.add_middleware(
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 
+# Last layer availability actually observed during /analyze. Lets /health report
+# whether the judge/guard *really* answered (e.g. Pioneer reachable) rather than
+# just whether a key is configured — so the UI's layer chips don't lie.
+_last_layers: dict | None = None
+
+
 def _corpus_version() -> int:
     c = get_store().count()
     return int(c.get("injection", 0) + c.get("benign", 0))
@@ -57,13 +63,16 @@ def _context_window(text: str, start: int, end: int, radius: int = 200) -> str:
 @app.get("/health")
 def health() -> dict:
     s = get_settings()
+    # Prefer the real last-observed status; fall back to config before any
+    # /analyze has run.
+    layers = _last_layers or {
+        "heuristic": True,
+        "gliguard": s.guard_enabled,
+        "judge": s.judge_enabled,
+    }
     return {
         "ok": True,
-        "layers": {
-            "heuristic": True,
-            "gliguard": s.guard_enabled,
-            "judge": s.judge_enabled,
-        },
+        "layers": dict(layers),
         "store": s.firevolv_store,
         "corpus_version": _corpus_version(),
     }
@@ -126,6 +135,8 @@ async def analyze(req: AnalyzeRequest) -> AnalysisResult:
         "gliguard": bool(guard_spans) or (s.guard_enabled and not judge_result.degraded),
         "judge": judge_ran,
     }
+    global _last_layers
+    _last_layers = dict(layers)
 
     latency_ms = int((time.perf_counter() - t0) * 1000)
     return route(

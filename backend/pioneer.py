@@ -325,8 +325,19 @@ def call_gliguard(document: str) -> list[CandidateSpan]:
             json={
                 "model": s.pioneer_guard_model,
                 "messages": [{"role": "user", "content": document[:8000]}],
-                "max_tokens": 200,
-                "temperature": 0,
+                # GliGuard is an encoder model: it REQUIRES a `schema` describing
+                # the classification task, and returns label+confidence (not chat text).
+                "schema": {
+                    "classifications": [
+                        {
+                            "task": "prompt_safety",
+                            "labels": ["safe", "unsafe"],
+                            "multi_label": False,
+                            "threshold": 0.5,
+                        }
+                    ]
+                },
+                "include_confidence": True,
             },
             timeout=s.guard_timeout_s,
         )
@@ -356,18 +367,45 @@ def call_gliguard(document: str) -> list[CandidateSpan]:
     )]
 
 
+def _verdict_from_gliguard_data(data_block: dict) -> tuple[str | None, float | None]:
+    """GliGuard payload: {"data": {"<task>": {"label": ..., "confidence": ...}}}.
+
+    Return the most-severe non-safe classification, else the (safe) label."""
+    if not isinstance(data_block, dict):
+        return None, None
+    fallback: tuple[str | None, float | None] = (None, None)
+    for _task, verdict in data_block.items():
+        if not isinstance(verdict, dict) or "label" not in verdict:
+            continue
+        label = str(verdict["label"])
+        conf = _as_float(verdict.get("confidence", verdict.get("score")))
+        fallback = (label, conf)
+        if _GUARD_SEVERITY_MAP.get(label.lower(), "medium") != "none":
+            return label, conf  # first non-safe verdict wins
+    return fallback
+
+
 def _extract_guard_verdict(data: dict) -> tuple[str | None, float | None]:
+    # GliGuard native shape: {"data": {"prompt_safety": {"label", "confidence"}}}.
+    if isinstance(data.get("data"), dict):
+        label, score = _verdict_from_gliguard_data(data["data"])
+        if label is not None:
+            return label, score
     # Direct fields.
     for k in ("label", "verdict", "classification"):
         if k in data:
             return str(data[k]), _as_float(data.get("score"))
-    # Chat-completion envelope.
+    # Chat-completion envelope: content is a JSON string wrapping the GliGuard payload.
     try:
         content = data["choices"][0]["message"]["content"]
         if isinstance(content, str):
             try:
                 inner = json.loads(_strip_fences(content))
                 if isinstance(inner, dict):
+                    if isinstance(inner.get("data"), dict):
+                        label, score = _verdict_from_gliguard_data(inner["data"])
+                        if label is not None:
+                            return label, score
                     for k in ("label", "verdict", "classification"):
                         if k in inner:
                             return str(inner[k]), _as_float(inner.get("score"))
