@@ -20,7 +20,17 @@ Load in Python with `pydantic-settings` (reads `.env` automatically) or `python-
 
 > ⚠️ These are shared hackathon keys. Treat as sensitive: don't paste into
 > Slack/screenshots, don't hardcode in source, rotate after the event.
-> Still confirm the exact Pioneer model IDs and `PIONEER_BASE_URL` from Pioneer's docs.
+
+### Confirmed against the live Pioneer API (2026-07-24)
+- `PIONEER_BASE_URL=https://api.pioneer.ai/v1` — OpenAI-compatible (`/chat/completions`,
+  `/embeddings`) **and** Anthropic-compatible (`/messages`). Auth: `Authorization: Bearer <key>`.
+- `PIONEER_JUDGE_MODEL=claude-opus-4-8` — confirmed via `GET /v1/models` (best available Opus).
+- **Inference needs a billing plan.** The key authenticates and `GET /v1/models` works, but
+  every inference call currently returns `card_required` → subscribe to Hobby/Pro at
+  https://agent.pioneer.ai/billing. Until then the judge + GliGuard are gracefully degraded
+  (heuristics + retrieval carry detection; the app, learning loop, and F1 chart all work).
+  Enable billing and restart the server to activate the Claude judge.
+- No embeddings model is exposed yet → the app uses a local deterministic embedding by default.
 
 ---
 
