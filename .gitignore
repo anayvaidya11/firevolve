@@ -22,6 +22,9 @@ dist/
 .guild/
 results/
 
+# Local runtime data (DB, auth tokens, logs) — never commit
+local_data/
+
 # OS / editor
 .DS_Store
 .idea/

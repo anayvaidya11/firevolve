@@ -1,1 +1,1 @@
-"""Aegis backend package."""
+"""Firevolv backend package."""

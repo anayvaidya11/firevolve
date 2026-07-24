@@ -1,5 +1,5 @@
 """
-Aegis FastAPI app (PRD §7). One process, JSON everywhere, CORS open for the
+Firevolv FastAPI app (PRD §7). One process, JSON everywhere, CORS open for the
 local frontend. Serves the single-page UI from /.
 
 /analyze pipeline: retrieve top-k labeled examples -> run heuristics +
@@ -32,7 +32,7 @@ from .schemas import (
     LabelRequest,
 )
 
-app = FastAPI(title="Aegis", version="1.0")
+app = FastAPI(title="Firevolv", version="1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -64,7 +64,7 @@ def health() -> dict:
             "gliguard": s.guard_enabled,
             "judge": s.judge_enabled,
         },
-        "store": s.aegis_store,
+        "store": s.firevolv_store,
         "corpus_version": _corpus_version(),
     }
 

@@ -23,6 +23,7 @@ Built to the spec in [PRD.md](PRD.md).
 
 ## Table of contents
 
+- [Powered by Pioneer, Actian & Guild](#powered-by-pioneer-actian--guild) — the three-service loop
 - [How it works](#how-it-works) — three detection layers + the learning loop
 - [Quick start](#quick-start)
 - [Using the web UI](#using-the-web-ui)
@@ -33,6 +34,31 @@ Built to the spec in [PRD.md](PRD.md).
 - [Project layout](#project-layout)
 - [Testing](#testing)
 - [Design notes & guarantees](#design-notes--guarantees)
+
+---
+
+## Powered by Pioneer, Actian & Guild
+
+Firevolv's learning loop is split across three services — one to **detect**, one to
+**remember**, one to **prove**. Full write-up in
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+| Service | Role | In one line | Status in code |
+|---|---|---|---|
+| 🧠 **Pioneer** | Inference — serves the Claude Opus judge + GliGuard guard model | *"Is this text an attack?"* | **Live** ([pioneer.py](backend/pioneer.py)) |
+| 📚 **Actian** | Vector store — labeled spans → k-NN retrieval (the learning loop) | *Remembers past corrections so the judge learns* | **Stubbed**, falls back to in-memory ([memory.py](backend/memory.py)) |
+| 📈 **Guild** | Eval harness — runs the benchmark at each memory state | *Charts F1 rising as the corpus grows* | **External CLI** ([guild.yml](eval/guild.yml)) |
+
+```
+ Pioneer detects ─▶ human accepts/rejects ─▶ Actian remembers ─▶ sharper next detection
+                                                                          │
+                                          Guild proves it ◀───────────────┘
+                                     (F1 climbs as labels accumulate)
+```
+
+The mechanics of each layer, the router, and the vector-store swap are detailed
+in [How it works](#how-it-works) and [The learning loop](#the-learning-loop-self-evolution)
+below.
 
 ---
 
@@ -101,7 +127,7 @@ Open **http://localhost:8000** — the backend serves the single-page UI from
 To (re)generate the benchmark file, only needed for the eval:
 
 ```bash
-./.venv/bin/python benchmark/build_bench.py    # writes benchmark/Firevolv_bench.jsonl (30 docs)
+./.venv/bin/python benchmark/build_bench.py    # writes benchmark/firevolv_bench.jsonl (30 docs)
 ```
 
 ---
@@ -210,7 +236,7 @@ On the next document, two things happen ([retrieval.py](backend/retrieval.py)):
 entirely through retrieval, which is why it's instant and safe. The vector store
 is backend-swappable ([memory.py](backend/memory.py)): the default `InMemoryStore`
 (numpy cosine k-NN, lost on restart) implements the same `MemoryStore` interface
-as the `ActianStore` stub — flip `Firevolv_STORE=actian` once that client is wired.
+as the `ActianStore` stub — flip `FIREVOLV_STORE=actian` once that client is wired.
 
 ---
 
@@ -263,8 +289,8 @@ All settings live in [backend/config.py](backend/config.py) and load from `.env`
 | `PIONEER_JUDGE_MODEL` | Judge model id | `claude-opus-4-8` |
 | `PIONEER_GUARD_MODEL` | Guard model id | `gliguard` |
 | `PIONEER_EMBED_MODEL` | Remote embeddings; blank → local hasher | `""` |
-| `Firevolv_STORE` | `memory` or `actian` | `memory` |
-| `ACTIAN_URL` / `ACTIAN_API_KEY` / `ACTIAN_COLLECTION` | Vector store (when `Firevolv_STORE=actian`) | — |
+| `FIREVOLV_STORE` | `memory` or `actian` | `memory` |
+| `ACTIAN_URL` / `ACTIAN_API_KEY` / `ACTIAN_COLLECTION` | Vector store (when `FIREVOLV_STORE=actian`) | — |
 | `BLOCK_THRESHOLD` / `PASS_THRESHOLD` | Router bands | `0.80` / `0.20` |
 | `RETRIEVAL_K` | Few-shot examples retrieved | `3` |
 | `RETRIEVAL_HIT_THRESHOLD` / `RETRIEVAL_MARGIN` | Retrieval-detector cutoffs | `0.70` / `0.10` |
@@ -278,7 +304,7 @@ All settings live in [backend/config.py](backend/config.py) and load from `.env`
   first probe) and detection runs on heuristics + retrieval — which is why the
   whole system (UI, learning loop, eval, F1 chart) works today. Enable billing
   and restart to light up the judge.
-- **Vector store**: `Firevolv_STORE=memory` (zero-setup numpy k-NN) by default; flip
+- **Vector store**: `FIREVOLV_STORE=memory` (zero-setup numpy k-NN) by default; flip
   to `actian` once credentials are provisioned ([memory.py](backend/memory.py),
   `ActianStore`).
 - **Embeddings**: local deterministic hashing embedding (no model download); set
@@ -305,7 +331,7 @@ frontend/
   index.html      single-page UI (vanilla JS + fetch)
 benchmark/
   build_bench.py  generates the 30-doc frozen benchmark
-  Firevolv_bench.jsonl
+  firevolv_bench.jsonl
   demo_docs/      sample documents for the UI (incl. a live injection payload)
 eval/
   run_bench.py    scoring harness + F1-over-versions SVG chart

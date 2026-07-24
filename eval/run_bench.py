@@ -1,5 +1,5 @@
 """
-Aegis eval harness (PRD §9). Runs the full pipeline over the frozen benchmark
+Firevolv eval harness (PRD §9). Runs the full pipeline over the frozen benchmark
 and logs document-level P/R/F1 per corpus version.
 
 Scoring (PRD §9.2): predicted band in {BLOCK, UNCERTAIN} = positive vs gold
@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from eval.seeds import seeds_for  # noqa: E402
 
-BENCH = ROOT / "benchmark" / "aegis_bench.jsonl"
+BENCH = ROOT / "benchmark" / "firevolv_bench.jsonl"
 RESULTS = ROOT / "results"
 
 
@@ -134,7 +134,7 @@ def svg_chart(points: list[tuple[str, float]], out: Path):
     )
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <rect width="{W}" height="{H}" fill="#0e1116"/>
-<text x="{W/2}" y="26" fill="#e6edf3" font-size="15" text-anchor="middle" font-family="sans-serif">Aegis — F1 across corpus versions</text>
+<text x="{W/2}" y="26" fill="#e6edf3" font-size="15" text-anchor="middle" font-family="sans-serif">Firevolv — F1 across corpus versions</text>
 <line x1="{pad}" y1="{H-pad}" x2="{W-pad}" y2="{H-pad}" stroke="#2a3140"/>
 <line x1="{pad}" y1="{pad}" x2="{pad}" y2="{H-pad}" stroke="#2a3140"/>
 <polyline points="{poly}" fill="none" stroke="#4c8dff" stroke-width="2.5"/>

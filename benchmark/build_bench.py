@@ -1,8 +1,8 @@
 """
-Build the frozen Aegis benchmark (PRD §9.1): ~30 docs, deterministic.
+Build the frozen Firevolv benchmark (PRD §9.1): ~30 docs, deterministic.
 
 15 injected (overt + subtle persona-specific + >=3 obfuscated),
-10 clean, 5 hard negatives (must PASS). Writes benchmark/aegis_bench.jsonl.
+10 clean, 5 hard negatives (must PASS). Writes benchmark/firevolv_bench.jsonl.
 
 Each record: {id, text, gold_label: "injection"|"clean", gold_spans: [{start,end}],
 subtle: bool}. gold_spans are computed by locating the marked injection substring.
@@ -14,7 +14,7 @@ import base64
 import json
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "aegis_bench.jsonl"
+OUT = Path(__file__).resolve().parent / "firevolv_bench.jsonl"
 
 
 def zw(s: str) -> str:

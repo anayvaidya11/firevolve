@@ -1,5 +1,5 @@
 """
-Aegis shared data models (PRD §5) — single source of truth.
+Firevolv shared data models (PRD §5) — single source of truth.
 
 Frozen contract shared by every layer, the router, and the API. Keep the enums
 here authoritative: the judge-capture tripwire fires when the judge emits a

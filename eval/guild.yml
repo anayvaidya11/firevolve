@@ -8,11 +8,18 @@
 #   guild run bench corpus_version=v2
 #   guild compare            # F1 across versions -> the money chart
 
-- model: aegis
+- model: firevolv
   operations:
     bench:
-      description: Evaluate Aegis over the frozen benchmark at one corpus version.
-      main: eval/run_bench --version ${corpus_version}
+      description: Evaluate Firevolv over the frozen benchmark at one corpus version.
+      # Run the real in-place script from the repo root instead of Guild's copied
+      # sandbox: run_bench.py bootstraps its own sys.path from __file__, and
+      # pydantic-settings loads .env relative to CWD, so both need the repo root.
+      # (Guild's default sandbox run breaks `from eval.seeds import ...`.)
+      # Portable: Guild sets $PROJECT_DIR to this guildfile's dir (eval/), so the
+      # repo root is $PROJECT_DIR/..; `python` resolves to the active env (run
+      # inside the `guild` conda env — see eval/setup_guild_env.sh).
+      exec: bash -c 'cd "$PROJECT_DIR/.." && python eval/run_bench.py --version ${corpus_version}'
       flags:
         corpus_version:
           description: Seeded corpus state (v0 empty, v1 = 5 labels, v2 = 15 labels)
@@ -24,5 +31,5 @@
         - 'F1=(?P<f1>\value)'
         - 'acc=(?P<accuracy>\value)'
       requires:
-        - file: ../benchmark/aegis_bench.jsonl
+        - file: ../benchmark/firevolv_bench.jsonl
         - file: ../backend

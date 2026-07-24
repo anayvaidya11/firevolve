@@ -1,5 +1,5 @@
 """
-Aegis configuration (PRD §12) via pydantic-settings.
+Firevolv configuration (PRD §12) via pydantic-settings.
 
 Reads .env automatically. Secrets never hardcoded. All thresholds and model
 IDs live here so they can be tuned against the benchmark in one place.
@@ -29,10 +29,10 @@ class Settings(BaseSettings):
     pioneer_embed_model: str = ""  # blank -> local deterministic fallback
 
     # --- Vector store ---
-    aegis_store: str = "memory"
+    firevolv_store: str = "memory"
     actian_url: str = ""
     actian_api_key: str = ""
-    actian_collection: str = "aegis_labels"
+    actian_collection: str = "firevolv_labels"
 
     # --- Router thresholds ---
     block_threshold: float = 0.80

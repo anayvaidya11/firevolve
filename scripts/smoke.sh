@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Live end-to-end smoke test against a running Aegis server.
+# Live end-to-end smoke test against a running Firevolv server.
 # Starts uvicorn, exercises every endpoint incl. the real (degraded) judge path
 # and the learning loop, prints PASS/FAIL, and tears the server down.
 set -uo pipefail

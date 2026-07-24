@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 os.environ["PIONEER_API_KEY"] = ""
 os.environ["PIONEER_GLIGUARD_API_KEY"] = ""
 os.environ["PIONEER_BASE_URL"] = ""
-os.environ["AEGIS_STORE"] = "memory"
+os.environ["FIREVOLV_STORE"] = "memory"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

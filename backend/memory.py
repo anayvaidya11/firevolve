@@ -1,5 +1,5 @@
 """
-Aegis learning-loop memory.
+Firevolv learning-loop memory.
 
 Backend-swappable vector store for labeled spans. All callers use the
 `MemoryStore` interface only, so switching from the in-memory backend to
@@ -128,7 +128,7 @@ class ActianStore:
         raise NotImplementedError(
             "ActianStore not wired yet — using InMemoryStore. "
             "Implement insert/query/count/reset against the Actian client, "
-            "then flip AEGIS_STORE=actian."
+            "then flip FIREVOLV_STORE=actian."
         )
 
     def insert(self, record: LabelRecord) -> None: ...
@@ -143,16 +143,16 @@ _store: MemoryStore | None = None
 
 
 def get_store() -> MemoryStore:
-    """Singleton store. Swap backends via AEGIS_STORE env (default: memory)."""
+    """Singleton store. Swap backends via FIREVOLV_STORE env (default: memory)."""
     global _store
     if _store is not None:
         return _store
-    backend = os.getenv("AEGIS_STORE", "memory").lower()
+    backend = os.getenv("FIREVOLV_STORE", "memory").lower()
     if backend == "actian":
         _store = ActianStore(
             url=os.environ["ACTIAN_URL"],
             api_key=os.environ["ACTIAN_API_KEY"],
-            collection=os.getenv("ACTIAN_COLLECTION", "aegis_labels"),
+            collection=os.getenv("ACTIAN_COLLECTION", "firevolv_labels"),
         )
     else:
         _store = InMemoryStore()
