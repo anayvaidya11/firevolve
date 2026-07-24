@@ -74,18 +74,23 @@ def _nearest_by_label(matches) -> tuple[float, str, object | None]:
     return inj_sim, ben_sim, best_inj
 
 
-def _context(document: str, start: int, end: int, radius: int = 120) -> str:
-    lo = max(0, start - radius)
-    hi = min(len(document), end + radius)
-    return document[lo:hi]
+def _overlaps(a_start: int, a_end: int, regions: list[tuple[int, int]]) -> bool:
+    for rs, re_ in regions:
+        if a_start < re_ and rs < a_end:
+            return True
+    return False
 
 
 def detect_by_retrieval(
     store: MemoryStore, document: str, existing: list[CandidateSpan]
 ) -> list[CandidateSpan]:
-    """Emit retrieval candidates for injection-similar segments; return new spans.
-    Also mutates `existing` in place: clear false positives that match a benign
-    example, and tag/confirm those that match an injection example."""
+    """Sentence-granularity retrieval, then region-based calibration.
+
+    Seeds are sentence-shaped, so we classify each sentence as an injection or
+    benign region by its nearest labeled neighbor, emit candidates for injection
+    regions, and clear heuristic false positives that overlap a benign region.
+    Region overlap decouples the benign signal from the (often boundary-crossing)
+    heuristic span text, which is what makes hard negatives reliably clear."""
     s = get_settings()
     counts = store.count()
     if counts.get("injection", 0) == 0 and counts.get("benign", 0) == 0:
@@ -95,16 +100,18 @@ def detect_by_retrieval(
     margin = s.retrieval_margin
     k = max(5, s.retrieval_k)
     new_spans: list[CandidateSpan] = []
+    inj_regions: list[tuple[int, int]] = []
+    ben_regions: list[tuple[int, int]] = []
 
-    # 1. Retrieval-as-detector over segments: a segment closer to a labeled
-    #    injection than to any benign example (and above threshold) is flagged.
     segs = _segments(document)
-    if segs:
-        vecs = embed_texts([t for _, _, t in segs])
-        for (start, end, text), vec in zip(segs, vecs):
-            inj_sim, ben_sim, best = _nearest_by_label(store.query(vec, k))
-            if best is None or inj_sim < thresh or inj_sim < ben_sim + margin:
-                continue
+    if not segs:
+        return []
+    vecs = embed_texts([t for _, _, t in segs])
+    for (start, end, text), vec in zip(segs, vecs):
+        inj_sim, ben_sim, best = _nearest_by_label(store.query(vec, k))
+        # Injection region -> flag it.
+        if best is not None and inj_sim >= thresh and inj_sim >= ben_sim + margin:
+            inj_regions.append((start, end))
             sev = "critical" if inj_sim >= 0.90 else "high"
             cat = best.category if best.category in {
                 "instruction_override", "exfiltration", "obfuscation",
@@ -117,18 +124,20 @@ def detect_by_retrieval(
                 rationale=f"Closely matches a previously-labeled injection (sim={inj_sim:.2f}).",
                 raw_score=round(inj_sim, 4), similar_to_label=True,
             ))
+        # Benign region -> known-normal content.
+        elif ben_sim >= thresh and ben_sim >= inj_sim + margin:
+            ben_regions.append((start, end))
 
-    # 2. Calibration of existing candidates against nearest labeled neighbors,
-    #    using each candidate's surrounding context window.
+    # Calibrate existing candidates by region overlap.
     for cand in existing:
         if not cand.text.strip():
             continue
-        ctx = _context(document, cand.start, cand.end)
-        inj_sim, ben_sim, _ = _nearest_by_label(store.query(embed_one(ctx), k))
-        if inj_sim >= thresh and inj_sim >= ben_sim:
+        in_inj = _overlaps(cand.start, cand.end, inj_regions)
+        in_ben = _overlaps(cand.start, cand.end, ben_regions)
+        if in_inj:
             cand.similar_to_label = True
-        elif ben_sim >= thresh and ben_sim >= inj_sim + margin and cand.source in ("heuristic", "gliguard"):
-            # Known-normal content -> clear it (learned what's normal for this job).
+        elif in_ben and cand.source in ("heuristic", "gliguard"):
+            # Learned this is normal for this job -> clear the false positive.
             cand.severity = "none"
             cand.category = "benign"
             cand.rationale = (cand.rationale + " [cleared: matches a benign example you labeled]").strip()
