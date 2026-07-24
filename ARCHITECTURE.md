@@ -81,8 +81,12 @@ human corrections mean better detection.
 | v1 | 5 labels | 0.74 | 0.93 | **0.824** |
 | v2 | 17 labels | 1.00 | 0.93 | **0.966** |
 
-Driven by [eval/run_bench.py](eval/run_bench.py); Guild wraps the same script
-(`guild run bench corpus_version=v1`) for logged runs.
+Driven by [eval/run_bench.py](eval/run_bench.py); Guild AI (guildai) wraps the
+same script (`"$GUILD" run bench corpus_version=v1`, absolute path from
+[eval/setup_guild_env.sh](eval/setup_guild_env.sh)) for logged runs. Note: this
+is guildai the experiment tracker, not the same-named Guild.ai agent CLI — they
+collide on PATH, so guildai is called by absolute path (see
+[SETUP.md](SETUP.md)).
 
 > **In short:** Guild produces the rising-accuracy chart that shows the system is
 > learning.

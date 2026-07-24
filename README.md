@@ -271,8 +271,12 @@ model weights. Seeds are same-family *paraphrases* of held-out cases
 retrieval, not from re-labeling the test docs. Add `--url http://localhost:8000`
 to hit a live server instead.
 
-Guild.ai wraps the same script for logged, comparable runs
-([eval/guild.yml](eval/guild.yml)): `guild run bench corpus_version=v1`.
+Guild AI (guildai) wraps the same script for logged, comparable runs
+([eval/guild.yml](eval/guild.yml)): `"$GUILD" run bench corpus_version=v1`, where
+`$GUILD` is the guildai binary's absolute path printed by
+[eval/setup_guild_env.sh](eval/setup_guild_env.sh). (Plain `guild` on PATH is
+usually the unrelated Guild.ai *agent* CLI, which has no `run`/`compare` — see
+[SETUP.md](SETUP.md#two-different-tools-both-named-guild--dont-mix-them-up).)
 
 ---
 

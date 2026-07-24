@@ -1,12 +1,17 @@
-# Guild.ai experiment config (PRD §9.3).
+# Guild AI (guildai) experiment config (PRD §9.3).
 # Runs the pipeline over the frozen benchmark for a given corpus version and
 # logs P/R/F1 scalars so runs are comparable and the F1-over-versions chart
 # can be exported.
 #
-#   guild run bench corpus_version=v0
-#   guild run bench corpus_version=v1
-#   guild run bench corpus_version=v2
-#   guild compare            # F1 across versions -> the money chart
+# This is Guild AI / guildai 0.9.x (the ML experiment tracker), NOT the Guild.ai
+# agent-platform CLI that ships the same `guild` command. The agent CLI has no
+# run/compare and often shadows guildai on PATH, so invoke guildai by its
+# absolute path. `./setup_guild_env.sh` prints it as $GUILD; then:
+#
+#   "$GUILD" run bench corpus_version=v0
+#   "$GUILD" run bench corpus_version=v1
+#   "$GUILD" run bench corpus_version=v2
+#   "$GUILD" compare         # F1 across versions -> the money chart
 
 - model: firevolv
   operations:

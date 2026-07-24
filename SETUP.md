@@ -34,7 +34,20 @@ Load in Python with `pydantic-settings` (reads `.env` automatically) or `python-
 
 ---
 
-## Guild CLI (eval harness)
+## Two different tools, both named `guild` — don't mix them up
+
+Firevolv touches **two unrelated products that share the `guild` command**:
+
+| | What it is | Used for | Version here |
+|---|---|---|---|
+| **Guild.ai agent CLI** | Agent build/deploy platform (`guild agent`, `guild chat`, `guild mcp`) | Coding-agent tooling — the `.claude/skills/*` + `.mcp.json` | `0.17.0` (Homebrew/npm) |
+| **Guild AI (guildai)** | Python ML experiment tracker (`guild run`, `guild compare`) | **The eval harness / F1 chart** — `eval/guild.yml` | `0.9.0` (conda env) |
+
+They collide on `PATH`: the agent CLI usually wins, and it has **no `run`/`compare`**.
+So the eval harness must be invoked by the guildai binary's **absolute path**, not
+plain `guild` — see the eval-harness section below.
+
+## Guild.ai agent CLI (coding-agent tooling — NOT the eval harness)
 
 Requires **Node.js 18+ and npm**.
 
@@ -57,6 +70,21 @@ Full walkthrough: Guild getting-started guide (linked from the install dialog).
 
 > Note: the `guild setup` step writes agent docs into `.claude/skills/` — after
 > running it, the coding agent will have Guild's SDK reference available locally.
+
+## Guild AI eval harness (the F1 chart — separate tool)
+
+This is **guildai 0.9.0**, not the agent CLI above. It needs Python 3.11 (it
+imports the removed `imp` module), so it lives in its own conda env:
+
+```bash
+./eval/setup_guild_env.sh                 # creates conda env `guild`, prints $GUILD
+# The script prints the guildai binary's absolute path. Use it directly —
+# plain `guild` on PATH resolves to the agent CLI, which has no `run`/`compare`:
+GUILD=/opt/anaconda3/envs/guild/bin/guild   # (whatever setup printed)
+cd eval
+"$GUILD" run bench corpus_version=v0        # or v1 / v2
+"$GUILD" compare                            # F1-over-versions table
+```
 
 ---
 
