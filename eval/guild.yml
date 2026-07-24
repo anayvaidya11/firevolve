@@ -1,0 +1,28 @@
+# Guild.ai experiment config (PRD §9.3).
+# Runs the pipeline over the frozen benchmark for a given corpus version and
+# logs P/R/F1 scalars so runs are comparable and the F1-over-versions chart
+# can be exported.
+#
+#   guild run bench corpus_version=v0
+#   guild run bench corpus_version=v1
+#   guild run bench corpus_version=v2
+#   guild compare            # F1 across versions -> the money chart
+
+- model: aegis
+  operations:
+    bench:
+      description: Evaluate Aegis over the frozen benchmark at one corpus version.
+      main: eval/run_bench --version ${corpus_version}
+      flags:
+        corpus_version:
+          description: Seeded corpus state (v0 empty, v1 = 5 labels, v2 = 15 labels)
+          default: v0
+          choices: [v0, v1, v2]
+      output-scalars:
+        - 'P=(?P<precision>\value)'
+        - 'R=(?P<recall>\value)'
+        - 'F1=(?P<f1>\value)'
+        - 'acc=(?P<accuracy>\value)'
+      requires:
+        - file: ../benchmark/aegis_bench.jsonl
+        - file: ../backend
